@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import face_recognition
 from speak import speak
-
+import time
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 persons = 6
@@ -26,10 +26,6 @@ net = images_placeholder
 net = tf.nn.relu(tf.add(tf.matmul(net, weightsl1), biasesl1))
 net = tf.add(tf.matmul(net, weightsl2), biasesl2)
 
-# Define loss function
-loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=net, labels=labels_placeholder))
-
-
 saver = tf.train.Saver()
 if not os.path.exists('./tmp/'):
     os.mkdir('./tmp/')
@@ -45,6 +41,7 @@ with tf.Session() as sess:
     addr = './photos/'
     index = 0
     last = 999
+    start_time = time.time()
     while 1:
         cap = cv2.VideoCapture("rtsp://admin:gosunyun888@10.7.5.221:554/h264/ch1/main/av_stream")
         print(index)
@@ -59,7 +56,9 @@ with tf.Session() as sess:
             face_enc = np.reshape(face_enc, [1, 128])
             out = sess.run(tf.argmax(net, 1), feed_dict={images_placeholder: face_enc})
             out = out[0]
-            if last != out:
+            print('time:{}, start_time:{}'.format(time.time(), start_time))
+            if last != out or time.time()-start_time>30:
                 speak(names[out + 1])
+                start_time = time.time()
             last = out
             print(names[out + 1])
