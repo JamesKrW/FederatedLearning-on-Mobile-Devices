@@ -1,6 +1,44 @@
 import numpy as np
+import csv
 import face_recognition
 from face_recognition.face_recognition_cli import image_files_in_folder
+
+
+def csv_to_list(file_path):
+    # convert csv to x_list,y_list
+    x_list = []
+    y_list = []
+    x_tmp = []
+    with open(file_path, 'r') as f:
+        reader = csv.reader(f)
+        for row in reader:
+            x = row[0].strip('[').strip(']').split()
+            y = row[1]
+            if len(x) == 128:
+                x_tmp.clear()
+                for element in x:
+                    x_tmp.append(float(element))
+                x_list.append(x_tmp)
+                y_list.append(int(y))
+        return x_list, y_list
+
+
+def list_to_dict(x_list1, y_list1, x_list2, y_list2):
+    data_dict = {
+        'images_train': np.array(x_list1),
+        'labels_train': np.array(y_list1),
+        'images_test': np.array(x_list2),
+        'labels_test': np.array(y_list2),
+    }
+    return data_dict
+
+
+def csv_to_dict(train_path, test_path):
+    x_train, y_train = csv_to_list(train_path)
+    x_test, y_test = csv_to_list(test_path)
+
+    return list_to_dict(x_train, y_train, x_test, y_test)
+
 
 def load_file(i):
     x=[]
