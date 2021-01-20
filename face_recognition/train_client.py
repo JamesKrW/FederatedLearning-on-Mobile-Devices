@@ -3,11 +3,7 @@ import sys
 import time
 import pickle
 import numpy as np
-import csv
-import pandas as pd
 import tensorflow as tf
-
-from data_process import load_data
 from communication import Communication
 from data_process import csv_to_dict
 
@@ -31,10 +27,15 @@ def assign_vars(local_vars, placeholders):
 
 np.random.seed(1234)
 tf.set_random_seed(1234)
-PS_PUBLIC_IP = '10.162.131.60:61234'  # Public IP of the ps
-PS_PRIVATE_IP = '10.162.131.60:61234'  # Private IP of the ps
+PS_PUBLIC_IP = '202.120.38.209:37623'  # Public IP of the ps
+PS_PRIVATE_IP = '202.120.38.209:37623'  # Private IP of the ps
 #data_sets = load_data()
 data_sets = csv_to_dict('./train.csv', './test.csv')
+count = 0
+for root, dirs, files in os.walk('./'):
+    for each in files:
+        if each.endswith(".jpg"):
+            count += 1
 
 # Create the communication object and get the training hyperparameters
 communication = Communication(PS_PRIVATE_IP, PS_PUBLIC_IP)
@@ -101,7 +102,6 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 for round_num in range(communication_rounds):
     tf.reset_default_graph()
     sess = tf.Session()
-
 
     # Define input placeholders
     images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
@@ -195,18 +195,18 @@ for round_num in range(communication_rounds):
     delta_model_paras = [np.zeros(weights.shape) for weights in new_model_paras]
     for index in range(len(new_model_paras)):
         delta_model_paras[index] = new_model_paras[index] - old_model_paras[index]
-    send_dict = {'model_paras': delta_model_paras}
+    send_dict = {'model_paras': delta_model_paras, 'count': count}
 
     # update learning rate
     learning_rate *= decay_rate
 
     while True:
         # communication.send_np_array(send_message, client_socket)
-        print('aaaaaaaaaaaa')
+        #print('aaaaaaaaaaaa')
         send_message = pickle.dumps(send_dict)
-        print('lllllllllllll')
+        #print('lllllllllllll')
+        print('begin sending trained weights')
         communication.send_message(send_message, client_socket)
-        print('Sent trained weights')
         sys.stdout.flush()
         break
     print("Client trains over in round %d  and takes %f second\n" % (round_num + 1, time.time() - start_time))
@@ -215,6 +215,5 @@ for round_num in range(communication_rounds):
     print('')
     sys.stdout.flush()
     sess.close()
-
+client_socket.close()
 print('finished!')
-sys.stdout.flush()

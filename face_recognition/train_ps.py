@@ -3,7 +3,22 @@ import os
 import numpy as np
 from communication import Communication
 import pickle
-from general_functions import *
+
+
+def create_placeholders():
+    placeholders = []
+    for var in tf.trainable_variables():
+        placeholders.append(tf.placeholder_with_default(var, var.shape,
+                                                        name="%s/%s" % ("FedAvg", var.op.name)))
+    return placeholders
+
+
+def assign_vars(local_vars, placeholders):
+    reassign_ops = []
+    for var, fvar in zip(local_vars, placeholders):
+        reassign_ops.append(tf.assign(var, fvar))
+    return tf.group(*(reassign_ops))
+
 
 PS_PRIVATE_IP = "0.0.0.0:61234"
 PS_PUBLIC_IP = "0.0.0.0:61234"
@@ -56,8 +71,9 @@ communication.send_message(pickle.dumps(send_message), c)
 for i in range(communication_rounds):
     print('begin get')
     received_message = pickle.loads(communication.get_message(c))
-    #print('receive:', received_message)
+    # print('receive:', received_message)
     print('get over')
+    print('-----------------------------------------')
     delta_model_paras = received_message['model_paras']
     new_model_paras = [np.zeros(weights.shape) for weights in model_paras]
     for index in range(len(model_paras)):
@@ -69,9 +85,10 @@ for i in range(communication_rounds):
     update_local_vars_op = assign_vars(tf.trainable_variables(), placeholders)
     sess.run(update_local_vars_op, feed_dict=feed_dict)
     send_message = {'model_paras': new_model_paras}
-    print('begin send')
-    communication.send_message(pickle.dumps(send_message), c)
-    print('send over')
+    if i != communication_rounds - 1:
+        print('begin send')
+        communication.send_message(pickle.dumps(send_message), c)
+        print('send over')
     model_paras = new_model_paras
-
-saver.save(sess, './tmp/model.ckpt')
+    saver.save(sess, './tmp/model.ckpt')
+ps_socket.close()

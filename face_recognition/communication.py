@@ -1,8 +1,5 @@
 import sys
 import socket
-import time
-import numpy as np
-import pickle
 
 
 class Communication(object):
@@ -66,10 +63,13 @@ class Communication(object):
                 if not receiving_buffer:    # if we have not received anything, then all data has been transferred
                     break
                 ultimate_buffer += receiving_buffer # append the received data in this round to the ultimate_buffer
-
-            message = ultimate_buffer[0:int(0-int(5))] # this is the actual massage
-
-            connection_socket.send(b'RECEIVED')    # SRC.recv signal confirms that the message has been received successfully
+            if(ultimate_buffer[0:5]==b'10111'):
+                message = ultimate_buffer[5:int(0 - int(5))]  # this is the actual massage
+                connection_socket.send(b'RECEIVED')
+                print('Recived right message!')
+            else:
+                connection_socket.send(b'ERRORrrr')
+                print("Received wrong message!")
             return message
 
 
@@ -87,14 +87,14 @@ class Communication(object):
               message_to_send   (binary): binary data which is going to be sent.
               connection_socket (socket): a socket with a connection already established.
          """
-        message = message_to_send + b'EOF\r\n' # create the message with signature and EOF mark
+        message = b'10111'+ message_to_send + b'EOF\r\n' # create the message with signature and EOF mark
         connection_socket.settimeout(240)       # set timeout for the sendall operation
         connection_socket.sendall(message)      # send the message using the socket connection
         #print('sended!!!!!!!!!!!')
         while True:
-            check = connection_socket.recv(10)  # receive status signal
-            #print(check)
-            if check == b'ERROR':              # if error signal is received, retry
+            check = connection_socket.recv(8)  # receive status signal
+            print(check)
+            if check == b'ERRORrrr':              # if error signal is received, retry
                 connection_socket.sendall(message)
             elif check == b'RECEIVED':             # message received successfully, end
                 break
