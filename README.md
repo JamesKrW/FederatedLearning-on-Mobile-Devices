@@ -10,4 +10,6 @@ Federated Learning on Mobile Devices
 |speak          |语音播报  |
 |takephoto    |拍照，获取数据集                             |
 |test              |用训练好的模型对单张照片进行检测|
-
+|communication.py             |设备与服务器通信|
+|train_client.py             |设备接收服务器参数进行训练，回传|
+|train_ps.py             |服务器发送参数，进行权重更新|
