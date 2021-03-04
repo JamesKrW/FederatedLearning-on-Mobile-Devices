@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import os
 import face_recognition
 from face_recognition.face_recognition_cli import image_files_in_folder
 
@@ -8,16 +9,16 @@ def csv_to_list(file_path):
     # convert csv to x_list,y_list
     x_list = []
     y_list = []
-    x_tmp = []
     with open(file_path, 'r') as f:
         reader = csv.reader(f)
         for row in reader:
+            x_tmp = []
             x = row[0].strip('[').strip(']').split()
             y = row[1]
             if len(x) == 128:
-                x_tmp.clear()
                 for element in x:
                     x_tmp.append(float(element))
+                x_tmp = np.array(x_tmp)
                 x_list.append(x_tmp)
                 y_list.append(int(y))
         return x_list, y_list
@@ -40,55 +41,63 @@ def csv_to_dict(train_path, test_path):
     return list_to_dict(x_train, y_train, x_test, y_test)
 
 
-def load_file(i):
+def load_file(i, name_label):
     x=[]
     y=[]
-    for img in image_files_in_folder("./train_data/" + 'faces' + str(i)):
-        '''
-        print(img)
-        '''
+    for img in image_files_in_folder("./train_data/" + i):
         face = face_recognition.load_image_file(img)
         face_bounding_boxes = face_recognition.face_locations(face)
         if len(face_bounding_boxes) == 1:
             face_enc = face_recognition.face_encodings(face)[0]
             x.append(face_enc)
-            y.append(i-1)
+            y.append(name_label[i])
     return x, y
 
-def load_test_file(i):
+def load_test_file(i, name_label):
     x=[]
     y=[]
-    for img in image_files_in_folder("./test_data/" + 'faces' + str(i)):
+    for img in image_files_in_folder("./test_data/" + i):
         face = face_recognition.load_image_file(img)
         face_bounding_boxes = face_recognition.face_locations(face)
         if len(face_bounding_boxes) == 1:
             face_enc = face_recognition.face_encodings(face)[0]
             x.append(face_enc)
-            y.append(i-1)
+            y.append(name_label[i])
     return x, y
 
-def load_data():
-    k = 7
+def load_data(name_label):
+    files = []
+    for root in os.listdir('./train_data'):
+        if root != '.DS_Store':
+            files.append(root)
+    print(files)
+    k = len(files)
     xs = []
     ys = []
-    for i in range(1, k):
-        print("Processing training data set " + str(i))
-        X, Y = load_file(i)
+    for i in range(0, k):
+        print("Processing training data set " + files[i])
+        X, Y = load_file(files[i], name_label)
         xs.append(X)
         ys.append(Y)
-        print("Processing training data set " + str(i)+' finish!')
-    x_train = np.concatenate(xs)
-    y_train = np.concatenate(ys)
+        print("Processing training data set " + files[i]+' finish!')
+        x_train = np.concatenate(xs)
+        y_train = np.concatenate(ys)
     del xs, ys
 
+    files = []
+    for root in os.listdir('./test_data'):
+        if root != '.DS_Store':
+            files.append(root)
+    print(files)
+    k = len(files)
     xs = []
     ys = []
     for i in range(1, k):
-        print("Processing test_data set " + str(i))
-        X, Y = load_test_file(i)
+        print("Processing test_data set " + files[i])
+        X, Y = load_test_file(files[i], name_label)
         xs.append(X)
         ys.append(Y)
-        print("Processing test data set " + str(i) + ' finish!')
+        print("Processing test data set " + files[i] + ' finish!')
     x_test = np.concatenate(xs)
     y_test = np.concatenate(ys)
     del xs, ys

@@ -5,8 +5,7 @@ import pickle
 import numpy as np
 import tensorflow as tf
 from communication import Communication
-from data_process import csv_to_dict
-
+from data_process import load_data
 os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 
 
@@ -27,10 +26,10 @@ def assign_vars(local_vars, placeholders):
 
 np.random.seed(1234)
 tf.set_random_seed(1234)
-PS_PUBLIC_IP = '202.120.38.209:37623'  # Public IP of the ps
-PS_PRIVATE_IP = '202.120.38.209:37623'  # Private IP of the ps
-#data_sets = load_data()
-data_sets = csv_to_dict('./train.csv', './test.csv')
+PS_PUBLIC_IP = '10.162.83.55:61234'  # Public IP of the ps
+PS_PRIVATE_IP = '10.162.83.55:61234'  # Private IP of the ps
+persons = 6
+#data_sets = csv_to_dict('./train.csv', './test.csv')
 count = 0
 for root, dirs, files in os.walk('./'):
     for each in files:
@@ -40,12 +39,22 @@ for root, dirs, files in os.walk('./'):
 # Create the communication object and get the training hyperparameters
 communication = Communication(PS_PRIVATE_IP, PS_PUBLIC_IP)
 client_socket = communication.start_socket_client()
+
+print('Sending name list to the PS...')
+files = []
+for root in os.listdir('./train_data'):
+    if root != '.DS_Store':
+        files.append(root)
+send_message = pickle.dumps(files)
+communication.send_message(send_message, client_socket)
+
 print('Waiting for PS\'s command...')
 sys.stdout.flush()
 client_socket.settimeout(300)
 
 # hyperparameters = communication.get_np_array(client_socket)
 received_message = pickle.loads(communication.get_message(client_socket))
+name_label = received_message['namelabel']
 hyperparameters = received_message['hyperparameters']
 old_model_paras = received_message['model_paras']
 #print('hyper:  {}'.format(hyperparameters))
@@ -56,76 +65,30 @@ train_batch_size = hyperparameters['train_batch_size']
 learning_rate = hyperparameters['learning_rate']
 decay_rate = hyperparameters['decay_rate']
 
-'''
-traindata = pd.read_csv("./train.csv", sep=',')
-x_train = traindata['data']
-x_train = np.array(list(x_train), dtype=float)
-y_train = traindata['label']
-testdata = pd.read_csv("./test.csv", sep=',')
-x_test = testdata['data']
-x_test = np.array(list(x_test), dtype=float)
-y_test = testdata['label']
-data_sets = {
-        'images_train': x_train,
-        'labels_train': y_train,
-        'images_test': x_test,
-        'labels_test': y_test,
-    }
-'''
-persons = 6
-'''
-# Define input placeholders
-images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
-labels_placeholder = tf.placeholder(tf.int64, shape=[None])
+data_sets = load_data(name_label)
 
-# Define variables
-weightsl1 = tf.Variable(tf.random_normal([128, 60]))
-biasesl1 = tf.Variable(tf.random_normal([60]))
-weightsl2 = tf.Variable(tf.zeros([60, persons]))
-biasesl2 = tf.Variable(tf.zeros([persons]))
-
-# Define net
-net = images_placeholder
-net = tf.nn.relu(tf.add(tf.matmul(net, weightsl1), biasesl1))
-net = tf.add(tf.matmul(net, weightsl2), biasesl2)
-
-
-# Define loss function
-loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=net, labels=labels_placeholder))
-
-# Define operation
-train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
-correct_prediction = tf.equal(tf.argmax(net, 1), labels_placeholder)
-accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-'''
 
 for round_num in range(communication_rounds):
     tf.reset_default_graph()
     sess = tf.Session()
-
     # Define input placeholders
     images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
     labels_placeholder = tf.placeholder(tf.int64, shape=[None])
-
     # Define variables
     weightsl1 = tf.Variable(tf.random_normal([128, 60]))
     biasesl1 = tf.Variable(tf.random_normal([60]))
     weightsl2 = tf.Variable(tf.zeros([60, persons]))
     biasesl2 = tf.Variable(tf.zeros([persons]))
-
     # Define net
     net = images_placeholder
     net = tf.nn.relu(tf.add(tf.matmul(net, weightsl1), biasesl1))
     net = tf.add(tf.matmul(net, weightsl2), biasesl2)
-
     # Define loss function
     loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits=net, labels=labels_placeholder))
-
     # Define operation
     train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
     correct_prediction = tf.equal(tf.argmax(net, 1), labels_placeholder)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-
 
     # communicate with ps, send batches_info and receive current model
     # client_socket = communication.start_socket_client()
@@ -144,13 +107,6 @@ for round_num in range(communication_rounds):
 
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
-    '''
-    model_para = tf.trainable_variables()
-    print(sess.run(model_para))
-    for v, para in zip(model_para, old_model_paras):
-        sess.run(tf.assign(v, para))
-    print(sess.run(model_para))
-    '''
     placeholders = create_placeholders()
     feed_dict = {}
     for place, para in zip(placeholders, old_model_paras):
@@ -159,7 +115,6 @@ for round_num in range(communication_rounds):
     sess.run(update_local_vars_op, feed_dict=feed_dict)
 
     print('Weights succesfully initialized')
-    #print(sess.run(tf.trainable_variables()))
     # begin training process
     print('Begin training')
     sys.stdout.flush()
@@ -201,10 +156,7 @@ for round_num in range(communication_rounds):
     learning_rate *= decay_rate
 
     while True:
-        # communication.send_np_array(send_message, client_socket)
-        #print('aaaaaaaaaaaa')
         send_message = pickle.dumps(send_dict)
-        #print('lllllllllllll')
         print('begin sending trained weights')
         communication.send_message(send_message, client_socket)
         sys.stdout.flush()
