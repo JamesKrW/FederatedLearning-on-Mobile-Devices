@@ -26,9 +26,8 @@ def assign_vars(local_vars, placeholders):
 
 np.random.seed(1234)
 tf.set_random_seed(1234)
-PS_PUBLIC_IP = '10.162.83.55:61234'  # Public IP of the ps
-PS_PRIVATE_IP = '10.162.83.55:61234'  # Private IP of the ps
-persons = 6
+PS_PRIVATE_IP = "202.120.38.209:37623"
+PS_PUBLIC_IP = "202.120.38.209:37623"
 #data_sets = csv_to_dict('./train.csv', './test.csv')
 count = 0
 for root, dirs, files in os.walk('./'):
@@ -54,8 +53,8 @@ client_socket.settimeout(300)
 
 # hyperparameters = communication.get_np_array(client_socket)
 received_message = pickle.loads(communication.get_message(client_socket))
-name_label = received_message['namelabel']
 hyperparameters = received_message['hyperparameters']
+name_label = hyperparameters['namelabel']
 old_model_paras = received_message['model_paras']
 #print('hyper:  {}'.format(hyperparameters))
 #print('old model:  {}'.format(old_model_paras))
@@ -64,7 +63,7 @@ local_epoch_num = hyperparameters['local_iter_num']
 train_batch_size = hyperparameters['train_batch_size']
 learning_rate = hyperparameters['learning_rate']
 decay_rate = hyperparameters['decay_rate']
-
+persons = hyperparameters['persons']
 data_sets = load_data(name_label)
 
 
@@ -127,7 +126,7 @@ for round_num in range(communication_rounds):
         labels_batch = data_sets['labels_train'][indices]
         sess.run(train_step, feed_dict={images_placeholder: images_batch,
                                         labels_placeholder: labels_batch})
-        if i % 200 == 0:
+        if i % 10 == 0:
             train_accuracy = sess.run(accuracy, feed_dict={
                 images_placeholder: images_batch, labels_placeholder: labels_batch})
             print('Step {:5d}: training accuracy {:g}'.format(i, train_accuracy))

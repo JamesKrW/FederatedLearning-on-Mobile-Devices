@@ -20,13 +20,14 @@ def assign_vars(local_vars, placeholders):
     return tf.group(*(reassign_ops))
 
 
-PS_PRIVATE_IP = "0.0.0.0:61234"
-PS_PUBLIC_IP = "0.0.0.0:61234"
-persons = 6
-communication_rounds = 2
+PS_PRIVATE_IP = "202.120.38.209:37623"
+PS_PUBLIC_IP = "202.120.38.209:37623"
+
+persons = 100
+communication_rounds = 5
 local_iter_num = 1000
 train_batch_size = 32
-learning_rate = 0.001
+learning_rate = 0.0001
 decay_rate = 0.95
 
 # Define input placeholders
@@ -55,29 +56,95 @@ else:
     init = tf.global_variables_initializer()
     sess.run(init)
 
+#------------------------receive namelist-----------------------------------
+communication = Communication(PS_PRIVATE_IP, PS_PUBLIC_IP)
+ps_socket= communication.start_socket_ps()
+c_1, _ = ps_socket.accept()
+c_2, _ = ps_socket.accept()
+#------------------------device1-----------------------------------
+received_message_1 = pickle.loads(communication.get_message(c_1))
+#------------------------device2-----------------------------------
+received_message_2 = pickle.loads(communication.get_message(c_2))
+#------------------------process name label-----------------------------------
+name_label_1 = received_message_1
+name_label_2 = received_message_2
+name_list=[]
+label_list=[]
+f=open('namelabel.csv', 'r')
+next(f)
+lines = f.readlines()
+f.close()
+for line in lines:
+    name=line.strip().split(',')[0].strip()
+    label=line.strip().split(',')[1].strip()
+    name_list.append(name)
+    label_list.append(label)
+addon1=list(set(name_label_1)-set(name_list))
+addon2=list(set(name_label_2)-set(name_list))
+for name in addon1:
+    name_list.append(name)
+    x=len(label_list)
+    label_list.append(str(x))
+for name in addon2:
+    name_list.append(name)
+    x=len(label_list)
+    label_list.append(str(x))
+name_dict={}
+for i in range(len(name_list)):
+    name_dict[name_list[i]]=label_list[i]
+#-----------------------------------------------------------
 hyperparameters = {'communication_rounds': communication_rounds,
                    'local_iter_num': local_iter_num,
                    'train_batch_size': train_batch_size,
                    'learning_rate': learning_rate,
-                   'decay_rate': decay_rate}
+                   'decay_rate': decay_rate,
+                   'namelabel':name_dict,
+                   'persons':persons}
 
 model_paras = sess.run(tf.trainable_variables())
+
+print("ready for connection")
+
+#------------------------send message to device1-----------------------------------
 send_message = {'model_paras': model_paras, 'hyperparameters': hyperparameters}
-communication = Communication(PS_PRIVATE_IP, PS_PUBLIC_IP)
-ps_socket = communication.start_socket_ps()
-c, _ = ps_socket.accept()
-communication.send_message(pickle.dumps(send_message), c)
+communication.send_message(pickle.dumps(send_message), c_1)
+
+print("device1 sent ")
+#------------------------send message to device2-----------------------------------
+send_message = {'model_paras': model_paras, 'hyperparameters': hyperparameters}
+communication.send_message(pickle.dumps(send_message), c_2)
+
+print("device2 sent ")
 
 for i in range(communication_rounds):
-    print('begin get')
-    received_message = pickle.loads(communication.get_message(c))
+    print('device1 begin get')
+    received_message_1 = pickle.loads(communication.get_message(c_1))
     # print('receive:', received_message)
-    print('get over')
+    print('device1 get over')
     print('-----------------------------------------')
-    delta_model_paras = received_message['model_paras']
+
+    print('device2 begin get')
+    received_message_2 = pickle.loads(communication.get_message(c_2))
+    # print('receive:', received_message)
+    print('device2 get over')
+    print('-----------------------------------------')
+
+    delta_model_paras_1 = received_message_1['model_paras']
+    delta_model_paras_2 = received_message_2['model_paras']
+
     new_model_paras = [np.zeros(weights.shape) for weights in model_paras]
+
+    print('communication_rounds:',i)
+    print(received_message_1['count'])
+    print(received_message_2['count'])
+    print('-------------------------------')
+
+    coefficient_1=float(received_message_1['count'])/(received_message_1['count']+received_message_2['count'])
+    coefficient_2=float(received_message_2['count'])/(received_message_1['count']+received_message_2['count'])
+
     for index in range(len(model_paras)):
-        new_model_paras[index] = model_paras[index] + delta_model_paras[index]
+        new_model_paras[index] = model_paras[index] + coefficient_1*delta_model_paras_1[index] + \
+                                 coefficient_2*delta_model_paras_2[index]
     placeholders = create_placeholders()
     feed_dict = {}
     for place, para in zip(placeholders, new_model_paras):
@@ -86,9 +153,17 @@ for i in range(communication_rounds):
     sess.run(update_local_vars_op, feed_dict=feed_dict)
     send_message = {'model_paras': new_model_paras}
     if i != communication_rounds - 1:
-        print('begin send')
-        communication.send_message(pickle.dumps(send_message), c)
-        print('send over')
+        print('device1 begin send')
+        communication.send_message(pickle.dumps(send_message), c_1)
+        print('device1 send over')
+        print('---------------------------------')
+        print('device2 begin send')
+        communication.send_message(pickle.dumps(send_message), c_2)
+        print('device2 send over')
+        print('---------------------------------')
     model_paras = new_model_paras
     saver.save(sess, './tmp/model.ckpt')
 ps_socket.close()
+
+
+#------------------------------------------------------------------------multi-thread

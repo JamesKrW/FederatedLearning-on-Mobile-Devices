@@ -8,8 +8,23 @@ from speak import speak
 import time
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-persons = 6
-names = {4: '王康睿', 1:'谭杨汶坚', 3:'陈泽越', 2:'Others', 5:'曾航', 6:'张远航'}
+#This should be alternated to adapt the new model
+persons = 100
+
+name_list = []
+label_list = []
+f=open('namelabel.csv', 'r')
+next(f)
+lines = f.readlines()
+f.close()
+for line in lines:
+    name=line.strip().split(',')[0].strip()
+    label=line.strip().split(',')[1].strip()
+    name_list.append(name)
+    label_list.append(label)
+name_dict={}
+for i in range(len(name_list)):
+    name_dict[label_list[i]]=name_list[i]
 
 # Define input placeholders
 images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
@@ -54,11 +69,15 @@ with tf.Session() as sess:
         if len(face_bounding_boxes) == 1:
             face_enc = face_recognition.face_encodings(face)[0]
             face_enc = np.reshape(face_enc, [1, 128])
-            out = sess.run(tf.argmax(net, 1), feed_dict={images_placeholder: face_enc})
+            pr = sess.run(net, feed_dict={images_placeholder: face_enc})
+            out = sess.run(tf.argmax(pr, 1))
             out = out[0]
             print('time:{}, start_time:{}'.format(time.time(), start_time))
             if last != out or time.time()-start_time>30:
-                speak(names[out + 1])
-                start_time = time.time()
+                if (pr[out] < 0.5):
+                    ''' stranger'''
+                else:
+                    speak(name_dict[out])
+                    start_time = time.time()
             last = out
-            print(names[out + 1])
+            print(name_dict[out])
