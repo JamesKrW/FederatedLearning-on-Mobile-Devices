@@ -74,12 +74,12 @@ def load_data(name_label):
     ys = []
     for i in range(1, k):
         print("Processing train data set " + files[i])
-        X, Y = load_test_file(files[i], name_label)
+        X, Y = load_file(files[i], name_label)
         xs.append(X)
         ys.append(Y)
         print("Processing train data set " + files[i] + ' finish!')
-    x_test = np.concatenate(xs)
-    y_test = np.concatenate(ys)
+    x_train = np.concatenate(xs)
+    y_train = np.concatenate(ys)
     del xs, ys
 
     files = []
