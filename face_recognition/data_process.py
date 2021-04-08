@@ -65,6 +65,49 @@ def load_test_file(i, name_label):
     return x, y
 
 def load_data(name_label):
+    files = []
+    for root in os.listdir('./train_data'):
+        if root != '.DS_Store':
+            files.append(root)
+    k = len(files)
+    xs = []
+    ys = []
+    for i in range(1, k):
+        print("Processing train data set " + files[i])
+        X, Y = load_test_file(files[i], name_label)
+        xs.append(X)
+        ys.append(Y)
+        print("Processing train data set " + files[i] + ' finish!')
+    x_test = np.concatenate(xs)
+    y_test = np.concatenate(ys)
+    del xs, ys
+
+    files = []
+    for root in os.listdir('./test_data'):
+        if root != '.DS_Store':
+            files.append(root)
+    k = len(files)
+    xs = []
+    ys = []
+    for i in range(1, k):
+        print("Processing test_data set " + files[i])
+        X, Y = load_test_file(files[i], name_label)
+        xs.append(X)
+        ys.append(Y)
+        print("Processing test data set " + files[i] + ' finish!')
+    x_test = np.concatenate(xs)
+    y_test = np.concatenate(ys)
+    del xs, ys
+
+    data_dict = {
+        'images_train': x_train,
+        'labels_train': y_train,
+        'images_test': x_test,
+        'labels_test': y_test,
+    }
+    return data_dict
+
+def load_data_csv(name_label):
     xs = []
     ys = []
     path = './train_data_csv'
@@ -106,21 +149,3 @@ def load_data(name_label):
         'labels_test': y_test,
     }
     return data_dict
-
-
-def load_data_csv(path, name_label):
-    xs=[]
-    ys=[]
-    for dir in os.listdir(path):
-        dirpath = os.path.join(path, dir)
-        if os.path.isdir(dirpath) and dir!='.DS_Store':
-            for file in os.listdir(dirpath):
-                filepath=os.path.join(dirpath,file)
-                x = np.loadtxt(open(filepath, "rb"), delimiter=",", skiprows=0)
-                print(dir)
-                y = name_label[dir]
-                xs.append(x)
-                ys.append(y)
-    x_data = np.concatenate(xs)
-    y_data = np.concatenate(ys)
-    return x_data, y_data
