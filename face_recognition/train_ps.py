@@ -20,12 +20,12 @@ def assign_vars(local_vars, placeholders):
     return tf.group(*(reassign_ops))
 
 
-PS_PRIVATE_IP = "202.120.38.209:37623"
-PS_PUBLIC_IP = "202.120.38.209:37623"
+PS_PRIVATE_IP = "0.0.0.0:61234"
+PS_PUBLIC_IP = "0.0.0.0:61234"
 
 persons = 100
-communication_rounds = 5
-local_iter_num = 1000
+communication_rounds = 50
+local_iter_num = 100
 train_batch_size = 32
 learning_rate = 0.0001
 decay_rate = 0.95
@@ -35,9 +35,9 @@ images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
 labels_placeholder = tf.placeholder(tf.int64, shape=[None])
 
 # Define variables
-weightsl1 = tf.Variable(tf.random_normal([128, 60]))
-biasesl1 = tf.Variable(tf.random_normal([60]))
-weightsl2 = tf.Variable(tf.zeros([60, persons]))
+weightsl1 = tf.Variable(tf.random_normal([128, 256]))
+biasesl1 = tf.Variable(tf.random_normal([256]))
+weightsl2 = tf.Variable(tf.zeros([256, persons]))
 biasesl2 = tf.Variable(tf.zeros([persons]))
 
 # Define net

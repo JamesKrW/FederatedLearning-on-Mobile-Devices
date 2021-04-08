@@ -2,10 +2,10 @@ import cv2
 import tensorflow as tf
 import os
 import numpy as np
-import sys
 import face_recognition
 from speak import speak
 import time
+import stranger
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 #This should be alternated to adapt the new model
@@ -75,7 +75,12 @@ with tf.Session() as sess:
             print('time:{}, start_time:{}'.format(time.time(), start_time))
             if last != out or time.time()-start_time>30:
                 if (pr[out] < 0.5):
-                    ''' stranger'''
+                    speak("hi, please register your name")
+                    name=stranger.stranger_name()
+                    path="./train_data/name"
+                    if not os.path.exists(path):
+                        os.makedirs(path)
+                    cv2.imwrite(os.path.join(path, str(index) + '.jpg'), face)
                 else:
                     speak(name_dict[out])
                     start_time = time.time()

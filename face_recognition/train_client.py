@@ -26,8 +26,9 @@ def assign_vars(local_vars, placeholders):
 
 np.random.seed(1234)
 tf.set_random_seed(1234)
-PS_PRIVATE_IP = "202.120.38.209:37623"
-PS_PUBLIC_IP = "202.120.38.209:37623"
+PS_PUBLIC_IP = '202.120.38.209:37623'  # Public IP of the ps
+PS_PRIVATE_IP = '202.120.38.209:37623'  # Private IP of the ps
+
 #data_sets = csv_to_dict('./train.csv', './test.csv')
 count = 0
 for root, dirs, files in os.walk('./'):
@@ -74,9 +75,9 @@ for round_num in range(communication_rounds):
     images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
     labels_placeholder = tf.placeholder(tf.int64, shape=[None])
     # Define variables
-    weightsl1 = tf.Variable(tf.random_normal([128, 60]))
-    biasesl1 = tf.Variable(tf.random_normal([60]))
-    weightsl2 = tf.Variable(tf.zeros([60, persons]))
+    weightsl1 = tf.Variable(tf.random_normal([128, 256]))
+    biasesl1 = tf.Variable(tf.random_normal([256]))
+    weightsl2 = tf.Variable(tf.zeros([256, persons]))
     biasesl2 = tf.Variable(tf.zeros([persons]))
     # Define net
     net = images_placeholder

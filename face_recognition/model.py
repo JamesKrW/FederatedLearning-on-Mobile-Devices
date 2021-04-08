@@ -5,18 +5,33 @@ import os
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
 batch_size = 32
-learning_rate = 0.001
-epoch = 5000
-persons = 6
+learning_rate = 0.0001
+epoch = 100000
+persons = 100
+
+name_list=[]
+label_list=[]
+f=open('namelabel.csv', 'r')
+next(f)
+lines = f.readlines()
+f.close()
+for line in lines:
+    name=line.strip().split(',')[0].strip()
+    label=line.strip().split(',')[1].strip()
+    name_list.append(name)
+    label_list.append(label)
+name_label={}
+for i in range(len(name_list)):
+    name_label[name_list[i]]=label_list[i]
 
 # Define input placeholders
 images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
 labels_placeholder = tf.placeholder(tf.int64, shape=[None])
 
 # Define variables
-weightsl1 = tf.Variable(tf.random_normal([128, 60]))
-biasesl1 = tf.Variable(tf.random_normal([60]))
-weightsl2 = tf.Variable(tf.zeros([60, persons]))
+weightsl1 = tf.Variable(tf.random_normal([128, 256]))
+biasesl1 = tf.Variable(tf.random_normal([256]))
+weightsl2 = tf.Variable(tf.zeros([256, persons]))
 biasesl2 = tf.Variable(tf.zeros([persons]))
 
 # Define net
@@ -42,7 +57,7 @@ with tf.Session() as sess:
     else:
         init = tf.global_variables_initializer()
         sess.run(init)
-    data_sets = load_data()
+    data_sets = load_data(name_label)
     best_acc = 0
     for i in range(epoch):
         indices = np.random.choice(data_sets['images_train'].shape[0], batch_size)
@@ -60,6 +75,6 @@ with tf.Session() as sess:
             print('Test accuracy {:g}'.format(test_accuracy))
             if best_acc < test_accuracy:
                 best_acc = test_accuracy
-                save_path = saver.save(sess, './tmp/model.ckpt')
+            save_path = saver.save(sess, './tmp/model.ckpt')
             print('Best accuracy {:g}'.format(best_acc))
 

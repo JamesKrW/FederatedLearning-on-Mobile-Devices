@@ -5,12 +5,6 @@ import socket
 class Communication(object):
 
     def __init__(self, private_ip, public_ip):
-        """Constructs a Federated Communication object
-            Args:
-              private_ip (str): complete local ip in which the chief is going to
-                    serve its socket. Example: 172.134.65.123:7777
-              public_ip (str): ip to which the workers are going to connect.
-         """
         self._private_ip = private_ip.split(':')[0]         # the private(local) IP address
         self._private_port = int(private_ip.split(':')[1])  # the private(local) IP port
         self._public_ip = public_ip.split(':')[0]           # the public(Internet) IP address
@@ -33,17 +27,11 @@ class Communication(object):
               sever_socket (socket): ssl secured socket that will work as client.
          """
         client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)   # create a socket
+        client_socket.setsockopt(socket.SOL_SOCKET, socket.SO_KEEPALIVE, 1)  # 在客户端开启心跳维护
         client_socket.connect((self._public_ip, self._public_port))         # connect to the server's public IP
         return client_socket
 
     def receiving_subroutine(self, connection_socket):
-        """Subroutine inside get_np_array to recieve a list of numpy arrays.
-        If the sending was not correctly recieved, it sends back an error message
-        to the sender in order to try it again.
-        Args:
-          connection_socket (socket): a socket with a connection already
-              established.
-         """
         timeout = 1.0
         while True:
             ultimate_buffer = b''   # buffer for saving data
@@ -70,23 +58,15 @@ class Communication(object):
             else:
                 connection_socket.send(b'ERRORrrr')
                 print("Received wrong message!")
+                continue
             return message
 
 
     def get_message(self, connection_socket):
-        """Routine to recieve binary data.
-            Args:
-              connection_socket (socket): a socket with a connection already established.
-        """
         message = self.receiving_subroutine(connection_socket)
         return message
 
     def send_message(self, message_to_send, connection_socket):
-        """Routine to send binary data. It sends it as many time as necessary.
-            Args:
-              message_to_send   (binary): binary data which is going to be sent.
-              connection_socket (socket): a socket with a connection already established.
-         """
         message = b'10111'+ message_to_send + b'EOF\r\n' # create the message with signature and EOF mark
         connection_socket.settimeout(240)       # set timeout for the sendall operation
         connection_socket.sendall(message)      # send the message using the socket connection
