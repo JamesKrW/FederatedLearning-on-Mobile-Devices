@@ -66,7 +66,10 @@ learning_rate = hyperparameters['learning_rate']
 decay_rate = hyperparameters['decay_rate']
 persons = hyperparameters['persons']
 data_sets = load_data(name_label)
-
+f = open('namelabel.csv', 'w')
+for k in name_label.keys():
+    f.write(k+','+name_label[k]+'\n')
+f.close()
 
 for round_num in range(communication_rounds):
     tf.reset_default_graph()
@@ -137,8 +140,14 @@ for round_num in range(communication_rounds):
             print('Test accuracy {:g}'.format(test_accuracy))
             if best_acc < test_accuracy:
                 best_acc = test_accuracy
+                if not os.path.exists('./tmp/'):
+                    os.mkdir('./tmp/')
+                saver = tf.train.Saver()
+                saver.save(sess, './tmp/model.ckpt')
             print('Best accuracy {:g}'.format(best_acc))
-
+            with open('result.txt','a') as f:
+                f.write('Round {}, Test accuracy {:g}\n'.format(round_num + 1, test_accuracy))
+                f.write('Best accuracy {:g}\n'.format(best_acc))
     print('%d round training over' % (round_num + 1))
     print('time: %d ----> iter: %d ----> best_accuracy: %.4f' %
           (time.time() - start_time, local_epoch_num, best_acc))
