@@ -35,7 +35,7 @@ images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
 labels_placeholder = tf.placeholder(tf.int64, shape=[None])
 
 # Define variables
-weightsl1 = tf.Variable(tf.random_normal([128, 256]))
+weightsl1 = tf.Variable(tf.random_normal([128,256 ]))
 biasesl1 = tf.Variable(tf.random_normal([256]))
 weightsl2 = tf.Variable(tf.zeros([256, persons]))
 biasesl2 = tf.Variable(tf.zeros([persons]))
@@ -90,8 +90,12 @@ for name in addon2:
     x=len(label_list)
     label_list.append(str(x))
 name_dict={}
+f=open('namelabel.csv', 'a')
 for i in range(len(name_list)):
     name_dict[name_list[i]]=label_list[i]
+    f.write(name_list[i]+','+label_list[i])
+f.close()
+
 #-----------------------------------------------------------
 hyperparameters = {'communication_rounds': communication_rounds,
                    'local_iter_num': local_iter_num,
