@@ -44,7 +44,8 @@ for line in lines:
 name_dict={}
 for i in range(len(name_list)):
     name_dict[label_list[i]]=name_list[i]
-
+name_dict2 = dict(zip(name_dict.values(), name_dict.keys()))
+print(name_dict2)
 # Define input placeholders
 images_placeholder = tf.placeholder(tf.float32, shape=[None, 128])
 labels_placeholder = tf.placeholder(tf.int64, shape=[None])
@@ -98,13 +99,13 @@ with tf.Session() as sess:
                 if (pr[0][out] < 0.5):
                     speak("hi, please register your name")
                     name=getmessage()
-                    path="./train_data/name"
+                    path="./train_data/"+name
                     if not os.path.exists(path):
                         os.makedirs(path)
                     for i in range(100):
                         cv2.imwrite(os.path.join(path, str(i) + '.jpg'), face)
                 else:
-                    speak(name_dict[out])
+                    speak(name_dict[str(out)])
                     start_time = time.time()
             last = out
-            print(name_dict[out])
+            print(name_dict[str(out)])
