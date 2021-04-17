@@ -99,11 +99,16 @@ with tf.Session() as sess:
                 if (pr[0][out] < 0.5):
                     speak("hi, please register your name")
                     name=getmessage()
-                    path="./train_data/"+name
-                    if not os.path.exists(path):
-                        os.makedirs(path)
+                    path1="./train_data/"+name
+	            path2="./test_data/"+name
+                    if not os.path.exists(path1):
+                        os.makedirs(path1)
+		    if not os.path.exists(path2):
+                        os.makedirs(path2)
                     for i in range(100):
-                        cv2.imwrite(os.path.join(path, str(i) + '.jpg'), face)
+                        cv2.imwrite(os.path.join(path1, str(i) + '.jpg'), face)
+	            for i in range(5):
+                        cv2.imwrite(os.path.join(path2, str(i) + '.jpg'), face)
                 else:
                     speak(name_dict[str(out)])
                     start_time = time.time()
