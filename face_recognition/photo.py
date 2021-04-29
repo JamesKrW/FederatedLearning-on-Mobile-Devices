@@ -2,23 +2,23 @@ import cv2
 import tensorflow as tf
 import os
 import numpy as np
-import sys
 import face_recognition
 from speak import speak
 import time
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-#This should be alternated to adapt the new model
+
 persons = 100
 
-import socket  # 导入 socket 模块
-s = socket.socket()  # 创建 socket 对象
-host = '0.0.0.0'  # 获取本地主机名
-port = 12350  # 设置端口
-s.bind((host, port))  # 绑定端口
-s.listen(2)  # 等待客户端连接
+import socket
+s = socket.socket()
+host = '0.0.0.0'
+port = 12350
+s.bind((host, port))
+s.listen(2)
+
 
 def getmessage():
-    c, addr = s.accept()  # 建立客户端连接
+    c, addr = s.accept()
     print('连接地址', addr)
     print('send over')
     while True:
@@ -27,7 +27,7 @@ def getmessage():
             ans = data.decode()
             print("message:", ans)
             break
-    c.close()  # 关闭连接
+    c.close()
     return ans
 
 name_list = []
@@ -89,26 +89,30 @@ with tf.Session() as sess:
         if len(face_bounding_boxes) == 1:
             face_enc = face_recognition.face_encodings(face)[0]
             face_enc = np.reshape(face_enc, [1, 128])
-            pr = sess.run(tf.nn.softmax(net),feed_dict={images_placeholder: face_enc})
+            pr = sess.run(tf.nn.softmax(net), feed_dict={images_placeholder: face_enc})
             out = sess.run(tf.argmax(pr, 1))
             out = out[0]
-            print("out:",out)
-            print("pr:",pr) 
+            print("out:", out)
+            print("pr:", pr)
             print('time:{}, start_time:{}'.format(time.time(), start_time))
             if last != out or time.time()-start_time>30:
                 if (pr[0][out] < 0.5):
                     speak("hi, please register your name")
-                    name=getmessage()
-                    path1="./train_data/"+name
-	            path2="./test_data/"+name
+                    name = getmessage()
+                    if name == 'close':
+                        continue
+                    path1 = "./train_data_csv/"+name
+                    path2 = "./test_data_csv/"+name
                     if not os.path.exists(path1):
                         os.makedirs(path1)
-		    if not os.path.exists(path2):
+                    if not os.path.exists(path2):
                         os.makedirs(path2)
                     for i in range(100):
-                        cv2.imwrite(os.path.join(path1, str(i) + '.jpg'), face)
-	            for i in range(5):
-                        cv2.imwrite(os.path.join(path2, str(i) + '.jpg'), face)
+                        csvname = os.path.join(path1, str(i) + '.csv')
+                        np.savetxt(csvname + '.csv', face_enc, delimiter=',')
+                    for i in range(5):
+                        csvname = os.path.join(path2, str(i) + '.csv')
+                        np.savetxt(csvname + '.csv', face_enc, delimiter=',')
                 else:
                     speak(name_dict[str(out)])
                     start_time = time.time()

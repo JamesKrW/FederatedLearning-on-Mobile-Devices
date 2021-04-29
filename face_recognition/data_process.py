@@ -125,21 +125,22 @@ def load_data_csv(name_label):
     y_train = np.array(ys)
     del xs, ys
 
-    files = []
-    for root in os.listdir('./test_data'):
-        if root != '.DS_Store':
-            files.append(root)
-    k = len(files)
     xs = []
     ys = []
-    for i in range(1, k):
-        print("Processing test_data set " + files[i])
-        X, Y = load_test_file(files[i], name_label)
-        xs.append(X)
-        ys.append(Y)
-        print("Processing test data set " + files[i] + ' finish!')
-    x_test = np.concatenate(xs)
-    y_test = np.concatenate(ys)
+    print('Begin to process test data set')
+    path = './test_data_csv'
+    for dir in os.listdir(path):
+        dirpath = os.path.join(path, dir)
+        if os.path.isdir(dirpath) and dir != '.DS_Store':
+            for file in os.listdir(dirpath):
+                filepath = os.path.join(dirpath, file)
+                x = np.loadtxt(open(filepath, "rb"), delimiter=",", skiprows=0)
+                print(dir)
+                y = name_label[dir]
+                xs.append(x)
+                ys.append(y)
+    x_test = np.array(xs)
+    y_test = np.array(ys)
     del xs, ys
 
     data_dict = {

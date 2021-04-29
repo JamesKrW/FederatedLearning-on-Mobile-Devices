@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from data_process import load_data
+from data_process import load_data_csv
 import os
 
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
@@ -57,7 +57,7 @@ with tf.Session() as sess:
     else:
         init = tf.global_variables_initializer()
         sess.run(init)
-    data_sets = load_data(name_label)
+    data_sets = load_data_csv(name_label)
     best_acc = 0
     for i in range(epoch):
         indices = np.random.choice(data_sets['images_train'].shape[0], batch_size)

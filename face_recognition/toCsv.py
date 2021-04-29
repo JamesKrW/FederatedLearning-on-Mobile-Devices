@@ -23,4 +23,4 @@ def tocsv(path):
                     csvname=os.path.join(copydir,str(count))
                     np.savetxt(csvname+'.csv', face_enc, delimiter=',')
 
-tocsv('./train_data')
+tocsv('./test_data')
