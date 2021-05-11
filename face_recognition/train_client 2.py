@@ -28,6 +28,7 @@ np.random.seed(1234)
 tf.set_random_seed(1234)
 PS_PUBLIC_IP = '192.168.42.100:37623'  # Public IP of the ps
 PS_PRIVATE_IP = '192.168.42.100:37623'  # Private IP of the ps
+saver = tf.train.Saver()
 #data_sets = csv_to_dict('./train.csv', './test.csv')
 count = 0
 for root, dirs, files in os.walk('./'):
@@ -89,7 +90,7 @@ for round_num in range(communication_rounds):
     train_step = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss)
     correct_prediction = tf.equal(tf.argmax(net, 1), labels_placeholder)
     accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
-    saver = tf.train.Saver()
+
     # communicate with ps, send batches_info and receive current model
     # client_socket = communication.start_socket_client()
     print('Waiting for PS\'s command...')
