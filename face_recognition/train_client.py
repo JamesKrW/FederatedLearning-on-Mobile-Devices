@@ -30,9 +30,9 @@ PS_PUBLIC_IP = '192.168.42.100:37623'  # Public IP of the ps
 PS_PRIVATE_IP = '192.168.42.100:37623'  # Private IP of the ps
 #data_sets = csv_to_dict('./train.csv', './test.csv')
 count = 0
-for root, dirs, files in os.walk('./'):
+for root, dirs, files in os.walk('./train_data_csv/'):
     for each in files:
-        if each.endswith(".jpg"):
+        if each.endswith(".csv"):
             count += 1
 
 # Create the communication object and get the training hyperparameters
@@ -41,7 +41,7 @@ client_socket = communication.start_socket_client()
 
 print('Sending name list to the PS...')
 files = []
-for root in os.listdir('./train_data'):
+for root in os.listdir('./train_data_csv'):
     if root != '.DS_Store':
         files.append(root)
 send_message = pickle.dumps(files)
@@ -62,8 +62,9 @@ learning_rate = hyperparameters['learning_rate']
 decay_rate = hyperparameters['decay_rate']
 persons = hyperparameters['persons']
 f = open('namelabel.csv', 'w')
+f.write("name,label\n")
 for item in name_label.items():
-    f.write(item[0]+','+item[1]+'\n')
+    f.write(item[0]+','+str(item[1])+'\n')
 f.close()
 data_sets = load_data_csv(name_label)
 
@@ -121,7 +122,7 @@ for round_num in range(communication_rounds):
     start_time = time.time()
     print('local epoch num = ', local_epoch_num)
     best_acc = 0
-
+    saver.save(sess, './tmp/model.ckpt')  
     for i in range(local_epoch_num):
         indices = np.random.choice(data_sets['images_train'].shape[0], train_batch_size)
         images_batch = data_sets['images_train'][indices]
@@ -138,7 +139,7 @@ for round_num in range(communication_rounds):
             print('Test accuracy {:g}'.format(test_accuracy))
             if best_acc < test_accuracy:
                 best_acc = test_accuracy
-                saver.save(sess, './tmp/model.ckpt')
+                #saver.save(sess, './tmp/model.ckpt')
             print('Best accuracy {:g}'.format(best_acc))
             with open('result.txt','w') as f:
                 f.write('Round {}, Test accuracy {:g}\n'.format(round_num + 1, test_accuracy))

@@ -20,8 +20,8 @@ def assign_vars(local_vars, placeholders):
     return tf.group(*(reassign_ops))
 
 
-PS_PRIVATE_IP = "0.0.0.0:37623"
-PS_PUBLIC_IP = "0.0.0.0:37623"
+PS_PRIVATE_IP = "0.0.0.0:61234"
+PS_PUBLIC_IP = "0.0.0.0:61234"
 
 persons = 100
 communication_rounds = 50

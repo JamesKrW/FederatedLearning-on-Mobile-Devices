@@ -1,3 +1,5 @@
+
+
 import numpy as np
 import csv
 import os
@@ -115,12 +117,15 @@ def load_data_csv(name_label):
         dirpath = os.path.join(path, dir)
         if os.path.isdir(dirpath) and dir != '.DS_Store':
             for file in os.listdir(dirpath):
-                filepath = os.path.join(dirpath, file)
-                x = np.loadtxt(open(filepath, "rb"), delimiter=",", skiprows=0)
-                print(dir)
-                y = name_label[dir]
-                xs.append(x)
-                ys.append(y)
+                try:
+                    filepath = os.path.join(dirpath, file)
+                    x = np.loadtxt(open(filepath, "rb"), delimiter=",", skiprows=0)
+                    print(dir)
+                    y = name_label[dir]
+                    xs.append(x)
+                    ys.append(y)
+                except:
+                    continue
     x_train = np.array(xs)
     y_train = np.array(ys)
     del xs, ys
@@ -133,12 +138,15 @@ def load_data_csv(name_label):
         dirpath = os.path.join(path, dir)
         if os.path.isdir(dirpath) and dir != '.DS_Store':
             for file in os.listdir(dirpath):
-                filepath = os.path.join(dirpath, file)
-                x = np.loadtxt(open(filepath, "rb"), delimiter=",", skiprows=0)
-                print(dir)
-                y = name_label[dir]
-                xs.append(x)
-                ys.append(y)
+                try:
+                    filepath = os.path.join(dirpath, file)
+                    x = np.loadtxt(open(filepath, "rb"), delimiter=",", skiprows=0)
+                    print(dir)
+                    y = name_label[dir]
+                    xs.append(x)
+                    ys.append(y)
+                except:
+                    continue
     x_test = np.array(xs)
     y_test = np.array(ys)
     del xs, ys

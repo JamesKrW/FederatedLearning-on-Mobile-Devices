@@ -3,32 +3,13 @@ import tensorflow as tf
 import os
 import numpy as np
 import face_recognition
-from speak import speak
+import speak as sb
 import time
+import socket
+import requests
 os.environ["KMP_DUPLICATE_LIB_OK"]="TRUE"
-
 persons = 100
 
-import socket
-s = socket.socket()
-host = '0.0.0.0'
-port = 12350
-s.bind((host, port))
-s.listen(2)
-
-
-def getmessage():
-    c, addr = s.accept()
-    print('连接地址', addr)
-    print('send over')
-    while True:
-        data = c.recv(1024)
-        if data:
-            ans = data.decode()
-            print("message:", ans)
-            break
-    c.close()
-    return ans
 
 name_list = []
 label_list = []
@@ -96,25 +77,12 @@ with tf.Session() as sess:
             print("pr:", pr)
             print('time:{}, start_time:{}'.format(time.time(), start_time))
             if last != out or time.time()-start_time>30:
-                if (pr[0][out] < 0.5):
-                    speak("hi, please register your name")
-                    name = getmessage()
-                    if name == 'close':
-                        continue
-                    path1 = "./train_data_csv/"+name
-                    path2 = "./test_data_csv/"+name
-                    if not os.path.exists(path1):
-                        os.makedirs(path1)
-                    if not os.path.exists(path2):
-                        os.makedirs(path2)
-                    for i in range(100):
-                        csvname = os.path.join(path1, str(i) + '.csv')
-                        np.savetxt(csvname + '.csv', face_enc, delimiter=',')
-                    for i in range(5):
-                        csvname = os.path.join(path2, str(i) + '.csv')
-                        np.savetxt(csvname + '.csv', face_enc, delimiter=',')
+                if (pr[0][out] < 0.333):
+                    sb.speak("hi, stranger!")
+                    print("stranger:")
+                    print(name_dict[str(out)])
                 else:
-                    speak(name_dict[str(out)])
+                    sb.speak(name_dict[str(out)])
                     start_time = time.time()
-            last = out
-            print(name_dict[str(out)])
+                    last = out
+                    print(name_dict[str(out)])
